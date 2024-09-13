@@ -1,12 +1,23 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Zendesk Data Extractor</title>
-  </head>
-  <body>
-    <h2>Zendesk Data Extractor</h2>
-    <button id="copy-data">Daten kopieren</button>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zendesk Name Extractor</title>
+</head>
+<body>
+    <h2>Zendesk Name Extractor</h2>
+    <button id="copy-name">Name kopieren</button>
+    
+    <!-- Textfelder für den extrahierten Vor- und Nachnamen -->
+    <div>
+        <label for="vName">Vorname:</label>
+        <input type="text" id="vName" readonly><br>
+
+        <label for="fName">Nachname:</label>
+        <input type="text" id="fName" readonly><br>
+    </div>
 
     <script src="popup.js"></script>
-  </body>
+</body>
 </html>
