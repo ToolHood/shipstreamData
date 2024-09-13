@@ -1,0 +1,21 @@
+{
+    "manifest_version": 3,
+    "name": "Zendesk Data Extractor",
+    "version": "1.0",
+    "description": "Kopiere Daten aus Zendesk und speichere sie lokal.",
+    "permissions": [
+      "activeTab",
+      "storage",
+      "scripting"
+    ],
+    "action": {
+      "default_popup": "popup.html"
+    },
+    "background": {
+      "service_worker": "background.js"
+    },
+    "host_permissions": [
+      "https://*.zendesk.com/*"
+    ]
+  }
+  
