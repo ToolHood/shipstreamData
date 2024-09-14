@@ -1,21 +1,21 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // Funktion, um Daten in `chrome.storage.local` zu speichern
+    // Function to store data in chrome.storage.local
     function saveDataToStorage(data) {
         chrome.storage.local.set({ extractedData: data }, () => {
-            console.log('Daten gespeichert: ', data);
+            console.log('Data saved:', data);
         });
     }
 
-    // Funktion, um Daten aus `chrome.storage.local` abzurufen
+    // Function to retrieve data from chrome.storage.local
     function getDataFromStorage(callback) {
         chrome.storage.local.get('extractedData', (result) => {
-            console.log('Gespeicherte Daten abgerufen: ', result.extractedData);
+            console.log('Retrieved data from storage:', result.extractedData);
             callback(result.extractedData);
         });
     }
 
-    // Eventlistener für den Button "Daten kopieren"
+    // Event listener for the "Copy Data" button
     document.getElementById('copy-name').addEventListener('click', async () => {
         let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
@@ -24,12 +24,13 @@ document.addEventListener('DOMContentLoaded', () => {
             function: () => {
                 const bodyText = document.body.innerText;
 
-                const nameRegex = /Name:\s*Mr\s*([A-Za-z]+)\s+([A-Za-z]+)/;
-                const addressRegex = /Street:\s*([^\n]+)\n+House Number:\s*([^\n]+)/;
-                const cityRegex = /City:\s*([^\n]+)/;
-                const postalCodeRegex = /Post code:\s*([^\n]+)/;
-                const emailRegex = /Email:\s*([^\n]+)/;
-                const phoneRegex = /Phone:\s*([^\n]+)/;
+                // Regular expressions for extracting data
+                const nameRegex = /Name:\s*Mr\s*([\w]+)\s+([\w]+)/;  // Matches "Name: Mr FirstName LastName"
+                const addressRegex = /Street:\s*([^\n]+)\n+House Number:\s*([^\n]+)/;  // Matches street and house number
+                const cityRegex = /City:\s*([^\n]+)/;  // Matches city
+                const postalCodeRegex = /Post code:\s*([^\n]+)/;  // Matches postal code
+                const emailRegex = /Email:\s*([^\n]+)/;  // Matches email
+                const phoneRegex = /Phone:\s*([^\n]+)/;  // Matches phone
 
                 const nameMatches = bodyText.match(nameRegex);
                 const addressMatches = bodyText.match(addressRegex);
@@ -41,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const ticketIdElement = document.querySelector('[data-test-id="header-tab-subtitle"] span');
                 const ticketId = ticketIdElement ? ticketIdElement.innerText.trim() : null;
 
+                // Check if all required data is extracted
                 if (nameMatches && addressMatches && cityMatches && postalCodeMatches && emailMatches && phoneMatches && ticketId) {
                     return {
                         vName: nameMatches[1],
@@ -53,68 +55,95 @@ document.addEventListener('DOMContentLoaded', () => {
                         ticketID: ticketId + " z"
                     };
                 } else {
+                    console.log('Could not extract some or all data.');
                     return null;
                 }
             },
         }, (results) => {
-            if (results && results[0].result) {
+            if (results && results[0] && results[0].result) {
                 const data = results[0].result;
                 saveDataToStorage(data);
-                console.log('Daten gespeichert:', data);
+                console.log('Data extracted and saved:', data);
+            } else {
+                console.log('Could not extract data. Please check the format.');
             }
         });
     });
 
-    // Funktion, die die Daten in die entsprechenden Felder im Formular einfügt
+    // Function to paste data into form fields
     function pasteDataInForm(data) {
         if (data) {
-            // Setze die zwischengespeicherten Daten in die entsprechenden Felder ein
+            let isPartiallySuccessful = false;
+
             if (document.getElementById('order-shipping_address_firstname')) {
                 document.getElementById('order-shipping_address_firstname').value = data.vName;
+            } else {
+                isPartiallySuccessful = true;
             }
 
             if (document.getElementById('order-shipping_address_lastname')) {
                 document.getElementById('order-shipping_address_lastname').value = data.fName;
+            } else {
+                isPartiallySuccessful = true;
             }
 
             if (document.getElementById('order-shipping_address_street0')) {
                 document.getElementById('order-shipping_address_street0').value = data.address;
+            } else {
+                isPartiallySuccessful = true;
             }
 
             if (document.getElementById('order-shipping_address_city')) {
                 document.getElementById('order-shipping_address_city').value = data.city;
+            } else {
+                isPartiallySuccessful = true;
             }
 
             if (document.getElementById('order-shipping_address_postcode')) {
                 document.getElementById('order-shipping_address_postcode').value = data.postalCode;
+            } else {
+                isPartiallySuccessful = true;
             }
 
             if (document.getElementById('order-shipping_address_email')) {
                 document.getElementById('order-shipping_address_email').value = data.email;
+            } else {
+                isPartiallySuccessful = true;
             }
 
             if (document.getElementById('order-shipping_address_telephone')) {
                 document.getElementById('order-shipping_address_telephone').value = data.phone;
+            } else {
+                isPartiallySuccessful = true;
             }
 
             if (document.getElementById('order-comment')) {
                 document.getElementById('order-comment').value = data.ticketID;
+            } else {
+                isPartiallySuccessful = true;
             }
 
-            // Automatisches Klicken auf die Versandmethode mit der ID 's_method_external_cheapest'
             const shippingMethod = document.getElementById('s_method_external_cheapest');
             if (shippingMethod) {
                 shippingMethod.click();
             } else {
-                console.log('Versandmethode "s_method_external_cheapest" nicht gefunden.');
+                console.log('Shipping method "s_method_external_cheapest" not found.');
             }
+
+            if (isPartiallySuccessful) {
+                console.log('Paste partially successful');
+            } else {
+                console.log('Paste successfully');
+            }
+        } else {
+            console.log('Paste failed: No data found');
         }
     }
 
-    // Eventlistener für den Paste-Button, um die zwischengespeicherten Daten im bestehenden Tab einzufügen
+    // Event listener for the "Paste Data" button
     document.getElementById('paste-data').addEventListener('click', async () => {
         let tabs = await chrome.tabs.query({ url: 'https://progamersware-gmbh.shipstream.app/*' });
-        
+
         if (tabs.length > 0) {
             let tabId = tabs[0].id;
 
@@ -125,32 +154,31 @@ document.addEventListener('DOMContentLoaded', () => {
                         function: pasteDataInForm,
                         args: [data]
                     });
+                } else {
+                    console.log('Paste failed: No data in storage');
                 }
             });
         } else {
-            console.log("Kein passender Tab gefunden.");
+            console.log("No matching tab found.");
         }
     });
 
-    // Eventlistener für die Checkbox "Disguise Telephone"
+    // Event listener for the "Disguise Telephone" checkbox
     document.getElementById('disguise-phone').addEventListener('change', () => {
         const disguisePhoneCheckbox = document.getElementById('disguise-phone');
 
         getDataFromStorage((data) => {
             if (data) {
-                // Wenn die Checkbox aktiviert ist, ersetze die Telefonnummer durch "0123456789"
                 if (disguisePhoneCheckbox && disguisePhoneCheckbox.checked) {
                     data.phone = "0123456789";
                 }
-                // Speichern der neuen Telefonnummer in chrome.storage.local
                 saveDataToStorage(data);
 
-                // Aktualisiere das Telefonfeld im Formular, falls es existiert
                 const telephoneField = document.getElementById('order-shipping_address_telephone');
                 if (telephoneField) {
                     telephoneField.value = data.phone;
                 } else {
-                    console.log('Telefonnummer-Feld nicht gefunden.');
+                    console.log('Phone field not found.');
                 }
             }
         });
