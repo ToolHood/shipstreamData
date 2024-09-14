@@ -1,34 +1,34 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zendesk Data Extractor</title>
+    <title>Data Extractor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 10px;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+        button {
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
-    <h2>Zendesk Data Extractor</h2>
-    <button id="copy-name">Daten kopieren</button>
-    
-    <!-- Textfelder für Vorname, Nachname, Adresse, Stadt, Postleitzahl und Land -->
-    <div>
-        <label for="vName">Vorname:</label>
-        <input type="text" id="vName" readonly><br>
+    <h1>Daten Extrahieren</h1>
 
-        <label for="fName">Nachname:</label>
-        <input type="text" id="fName" readonly><br>
+    <!-- Checkbox for disguising telephone -->
+    <label>
+        <input type="checkbox" id="disguise-phone" /> Disguise Telephone
+    </label>
 
-        <label for="address">Adresse:</label>
-        <input type="text" id="address" readonly><br>
-
-        <label for="city">Stadt:</label>
-        <input type="text" id="city" readonly><br>
-
-        <label for="postalCode">Postleitzahl:</label>
-        <input type="text" id="postalCode" readonly><br>
-
-        <label for="country">Land:</label>
-        <input type="text" id="country" readonly><br>
-    </div>
+    <!-- Buttons for copying and pasting data -->
+    <button id="copy-name">Daten Kopieren</button>
+    <button id="paste-data">Daten Einfügen</button>
 
     <script src="popup.js"></script>
 </body>
