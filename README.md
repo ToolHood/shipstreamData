@@ -165,5 +165,3 @@ If you'd like to contribute to the development of this extension, follow these s
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
 
 ---
-
-By following this `README`, you will be able to install, use, and contribute to the **Caseking Tools** extension, ensuring smooth workflows for your team at Caseking.
