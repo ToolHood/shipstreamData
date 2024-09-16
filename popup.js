@@ -1,5 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    function showAlert(message, type) {
+        const alertDiv = document.getElementById('alert');
+        alertDiv.innerText = message;
+        alertDiv.style.display = 'block';
+        alertDiv.style.backgroundColor = type === 'success' ? '#4CAF50' : '#f44336'; // Green for success, red for error
+        setTimeout(() => {
+            alertDiv.style.display = 'none';
+        }, 3000); // Hide after 3 seconds
+    }
+
     // Function to store data in chrome.storage.local
     function saveDataToStorage(data) {
         chrome.storage.local.set({ extractedData: data }, () => {
@@ -25,12 +35,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const bodyText = document.body.innerText;
 
                 // Regular expressions for extracting data
-                const nameRegex = /Name:\s*Mr\s*([\w]+)\s+([\w]+)/;  // Matches "Name: Mr FirstName LastName"
-                const addressRegex = /Street:\s*([^\n]+)\n+House Number:\s*([^\n]+)/;  // Matches street and house number
-                const cityRegex = /City:\s*([^\n]+)/;  // Matches city
-                const postalCodeRegex = /Post code:\s*([^\n]+)/;  // Matches postal code
-                const emailRegex = /Email:\s*([^\n]+)/;  // Matches email
-                const phoneRegex = /Phone:\s*([^\n]+)/;  // Matches phone
+                const nameRegex = /Name:\s*Mr\s*([\w]+)\s+([\w]+)/;
+                const addressRegex = /Street:\s*([^\n]+)\n+House Number:\s*([^\n]+)/;
+                const cityRegex = /City:\s*([^\n]+)/;
+                const postalCodeRegex = /Post code:\s*([^\n]+)/;
+                const emailRegex = /Email:\s*([^\n]+)/;
+                const phoneRegex = /Phone:\s*([^\n]+)/;
 
                 const nameMatches = bodyText.match(nameRegex);
                 const addressMatches = bodyText.match(addressRegex);
@@ -42,7 +52,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const ticketIdElement = document.querySelector('[data-test-id="header-tab-subtitle"] span');
                 const ticketId = ticketIdElement ? ticketIdElement.innerText.trim() : null;
 
-                // Check if all required data is extracted
                 if (nameMatches && addressMatches && cityMatches && postalCodeMatches && emailMatches && phoneMatches && ticketId) {
                     return {
                         vName: nameMatches[1],
@@ -55,7 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         ticketID: ticketId + " z"
                     };
                 } else {
-                    console.log('Could not extract some or all data.');
                     return null;
                 }
             },
@@ -63,18 +71,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (results && results[0] && results[0].result) {
                 const data = results[0].result;
                 saveDataToStorage(data);
-                console.log('Data extracted and saved:', data);
+                showAlert('Data successfully copied!', 'success');
             } else {
-                console.log('Could not extract data. Please check the format.');
+                showAlert('Failed to extract data. Please check the format.', 'error');
             }
         });
     });
 
     // Function to paste data into form fields
     function pasteDataInForm(data) {
+        let isPartiallySuccessful = false;
         if (data) {
-            let isPartiallySuccessful = false;
-
             if (document.getElementById('order-shipping_address_firstname')) {
                 document.getElementById('order-shipping_address_firstname').value = data.vName;
             } else {
@@ -123,20 +130,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 isPartiallySuccessful = true;
             }
 
-            const shippingMethod = document.getElementById('s_method_external_cheapest');
-            if (shippingMethod) {
-                shippingMethod.click();
-            } else {
-                console.log('Shipping method "s_method_external_cheapest" not found.');
-            }
-
             if (isPartiallySuccessful) {
-                console.log('Paste partially successful');
+                showAlert('Paste partially successful', 'error');
             } else {
-                console.log('Paste successfully');
+                showAlert('Data pasted successfully!', 'success');
             }
         } else {
-            console.log('Paste failed: No data found');
+            showAlert('No data to paste.', 'error');
         }
     }
 
@@ -154,12 +154,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         function: pasteDataInForm,
                         args: [data]
                     });
+                    showAlert('Data successfully Pasted!', 'success');
                 } else {
-                    console.log('Paste failed: No data in storage');
+                    showAlert('No data found in storage.', 'error');
                 }
             });
         } else {
-            console.log("No matching tab found.");
+            showAlert('No matching tab found.', 'error');
         }
     });
 
@@ -170,15 +171,13 @@ document.addEventListener('DOMContentLoaded', () => {
         getDataFromStorage((data) => {
             if (data) {
                 if (disguisePhoneCheckbox && disguisePhoneCheckbox.checked) {
-                    data.phone = "0123456789";
+                    data.phone = "0123456789";  // Disguised phone number
                 }
                 saveDataToStorage(data);
 
                 const telephoneField = document.getElementById('order-shipping_address_telephone');
                 if (telephoneField) {
                     telephoneField.value = data.phone;
-                } else {
-                    console.log('Phone field not found.');
                 }
             }
         });
