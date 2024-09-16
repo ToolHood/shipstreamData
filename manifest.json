@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Noble Request Handler",
-  "version": "1.8",
-  "description": "Processes data from the Zenddesk tickets and copies them into an already opened shipstream form at the push of a button.",
+  "version": "1.9",
+  "description": "https://github.com/ToolHood/shipstreamData/blob/main/README.md",
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
