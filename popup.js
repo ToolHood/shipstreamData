@@ -144,7 +144,19 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 isPartiallySuccessful = true;
             }
-
+            const shippingMethod = document.getElementById('s_method_external_cheapest');
+            if (shippingMethod) {
+                shippingMethod.click();
+    
+                // Manually trigger the 'change' event to ensure any event listeners are notified
+                const event = new Event('change', { bubbles: true });
+                shippingMethod.dispatchEvent(event);
+    
+                showAlert('Data pasted successfully and shipping method selected!', 'success');
+            } else {
+                console.log('Shipping method "s_method_external_cheapest" not found.');
+                showAlert('Data pasted, but shipping method not found.', 'error');
+            }
             // Wähle das entsprechende Land im Dropdown-Menü aus
             selectCountryInDropdown(data.country);
 
