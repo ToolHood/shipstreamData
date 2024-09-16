@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const postalCodeRegex = /Post code:\s*([^\n]+)/;
                 const emailRegex = /Email:\s*([^\n]+)/;
                 const phoneRegex = /Phone:\s*([^\n]+)/;
+                const countryRegex = /Country:\s*-\s*([A-Z]{2})/;
 
                 const nameMatches = bodyText.match(nameRegex);
                 const addressMatches = bodyText.match(addressRegex);
@@ -48,11 +49,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 const postalCodeMatches = bodyText.match(postalCodeRegex);
                 const emailMatches = bodyText.match(emailRegex);
                 const phoneMatches = bodyText.match(phoneRegex);
+                const countryMatches = bodyText.match(countryRegex);
 
                 const ticketIdElement = document.querySelector('[data-test-id="header-tab-subtitle"] span');
                 const ticketId = ticketIdElement ? ticketIdElement.innerText.trim() : null;
 
-                if (nameMatches && addressMatches && cityMatches && postalCodeMatches && emailMatches && phoneMatches && ticketId) {
+                // Map for country codes
+                const countryMap = {
+                    "DE": "Germany",
+                    "FR": "France",
+                    "ES": "Spain",
+                    "IT": "Italy",
+                    // Weitere Länderkürzel und Namen hier hinzufügen...
+                };
+
+                if (nameMatches && addressMatches && cityMatches && postalCodeMatches && emailMatches && phoneMatches && countryMatches && ticketId) {
+                    const countryCode = countryMatches[1].trim();
+                    const countryName = countryMap[countryCode] || countryCode;  // Falls kein Match in der Map, zeige das Kürzel
+
                     return {
                         vName: nameMatches[1],
                         fName: nameMatches[2],
@@ -61,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         postalCode: postalCodeMatches[1].trim(),
                         email: emailMatches[1].trim(),
                         phone: phoneMatches[1].trim(),
+                        country: countryName,
                         ticketID: ticketId + " z"
                     };
                 } else {
@@ -130,6 +145,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 isPartiallySuccessful = true;
             }
 
+            // Wähle das entsprechende Land im Dropdown-Menü aus
+            selectCountryInDropdown(data.country);
+
             if (isPartiallySuccessful) {
                 showAlert('Paste partially successful', 'error');
             } else {
@@ -138,6 +156,32 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             showAlert('No data to paste.', 'error');
         }
+    }
+
+    // Funktion, um das passende Land im Dropdown-Menü auszuwählen
+    function selectCountryInDropdown(countryName) {
+        const dropdown = document.getElementById('order-shipping_address_country_id');
+        
+        if (!dropdown) {
+            console.error('Dropdown not found!');
+            return;
+        }
+
+        // Überprüfen, ob der Ländernamen oder Kürzel übereinstimmt
+        for (let i = 0; i < dropdown.options.length; i++) {
+            let option = dropdown.options[i];
+            if (option.text.trim().toLowerCase() === countryName.trim().toLowerCase()) {
+                dropdown.selectedIndex = i;
+                console.log(`Selected country: ${option.text}`);
+                return;
+            } else if (option.value.trim().toLowerCase() === countryName.trim().toLowerCase()) {
+                dropdown.selectedIndex = i;
+                console.log(`Selected country by value: ${option.value}`);
+                return;
+            }
+        }
+
+        console.warn('Country not found in dropdown!');
     }
 
     // Event listener for the "Paste Data" button
