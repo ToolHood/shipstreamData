@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Noble Request Handler",
-  "version": "1.9",
-  "description": "https://github.com/ToolHood/shipstreamData/blob/main/README.md",
+  "version": "2.0",
+  "description": "2.0: User and SparePart Data Grabber\nhttps://github.com/ToolHood/shipstreamData/blob/main/README.md",
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
