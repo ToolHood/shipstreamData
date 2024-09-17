@@ -16,5 +16,11 @@
     "48": "images/icon48.png",
     "128": "images/icon128.png"
   },
-  "permissions": ["storage", "activeTab", "scripting"]
+  "permissions": ["storage", "activeTab", "scripting"],
+  "web_accessible_resources": [
+    {
+      "resources": ["data/spare_parts_sku.json"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

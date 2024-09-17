@@ -1,5 +1,5 @@
-document.addEventListener('DOMContentLoaded', () => {
-
+document.addEventListener('DOMContentLoaded', async () => {
+    // Reusable function to show alerts
     function showAlert(message, type) {
         const alertDiv = document.getElementById('alert');
         alertDiv.innerText = message;
@@ -25,63 +25,104 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Event listener for the "Copy Data" button
-    document.getElementById('copy-name').addEventListener('click', async () => {
+    // Function to find matching SKU based on chairModel and sparePart
+    async function findMatchingSKU(chairModel, sparePart) {
+        const response = await fetch(chrome.runtime.getURL('data/spare_parts_sku.json'));
+        const data = await response.json();
+
+        // Search for the matching combination
+        const combination = data.find(entry => entry.chairModel === chairModel && entry.sparePart === sparePart);
+
+        if (combination) {
+            document.getElementById('sku').value = combination.sku;
+            navigator.clipboard.writeText(combination.sku)  // Automatically copy SKU to clipboard
+                .then(() => showAlert(`Matching SKU copied to clipboard:\n ${combination.sku}`, 'success'))
+                .catch(() => showAlert('Failed to copy SKU to clipboard', 'error'));
+        } else {
+            showAlert('No matching SKU found', 'error');
+        }
+    }
+
+    // Function to extract and save user data (Name, Address, etc.)
+    function extractUserData() {
+        const bodyText = document.body.innerText;
+
+        const nameRegex = /Name:\s*Mr\s*([\w]+)\s+([\w]+)/;
+        const addressRegex = /Street:\s*([^\n]+)\n+House Number:\s*([^\n]+)/;
+        const cityRegex = /City:\s*([^\n]+)/;
+        const postalCodeRegex = /Post code:\s*([^\n]+)/;
+        const emailRegex = /Email:\s*([^\n]+)/;
+        const phoneRegex = /Phone:\s*([^\n]+)/;
+
+        const nameMatches = bodyText.match(nameRegex);
+        const addressMatches = bodyText.match(addressRegex);
+        const cityMatches = bodyText.match(cityRegex);
+        const postalCodeMatches = bodyText.match(postalCodeRegex);
+        const emailMatches = bodyText.match(emailRegex);
+        const phoneMatches = bodyText.match(phoneRegex);
+
+        const ticketIdElement = document.querySelector('[data-test-id="header-tab-subtitle"] span');
+        const ticketId = ticketIdElement ? ticketIdElement.innerText.trim() : null;
+
+        if (nameMatches && addressMatches && cityMatches && postalCodeMatches && emailMatches && phoneMatches && ticketId) {
+            return {
+                vName: nameMatches[1],
+                fName: nameMatches[2],
+                address: addressMatches[1].trim() + " " + addressMatches[2].trim(),
+                city: cityMatches[1].trim(),
+                postalCode: postalCodeMatches[1].trim(),
+                email: emailMatches[1].trim(),
+                phone: phoneMatches[1].trim(),
+                ticketID: ticketId + " z"
+            };
+        } else {
+            return null;
+        }
+    }
+
+    // Event listener for the "Copy Data" button to extract chair model and spare part
+    document.getElementById('copy-data').addEventListener('click', async () => {
         let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
         chrome.scripting.executeScript({
             target: { tabId: tab.id },
-            function: () => {
+            func: () => {
                 const bodyText = document.body.innerText;
 
-                // Regular expressions for extracting data
-                const nameRegex = /Name:\s*Mr\s*([\w]+)\s+([\w]+)/;
-                const addressRegex = /Street:\s*([^\n]+)\n+House Number:\s*([^\n]+)/;
-                const cityRegex = /City:\s*([^\n]+)/;
-                const postalCodeRegex = /Post code:\s*([^\n]+)/;
-                const emailRegex = /Email:\s*([^\n]+)/;
-                const phoneRegex = /Phone:\s*([^\n]+)/;
-                const countryRegex = /Country:\s*-\s*([A-Z]{2})/;
+                const chairModelRegex = /Chair:\s*([^\n]+)/;
+                const sparePartRegex = /Spare Parts Request\s*([^\n]+)/;
 
-                const nameMatches = bodyText.match(nameRegex);
-                const addressMatches = bodyText.match(addressRegex);
-                const cityMatches = bodyText.match(cityRegex);
-                const postalCodeMatches = bodyText.match(postalCodeRegex);
-                const emailMatches = bodyText.match(emailRegex);
-                const phoneMatches = bodyText.match(phoneRegex);
-                const countryMatches = bodyText.match(countryRegex);
+                const chairModelMatches = bodyText.match(chairModelRegex);
+                const sparePartMatches = bodyText.match(sparePartRegex);
 
-                const ticketIdElement = document.querySelector('[data-test-id="header-tab-subtitle"] span');
-                const ticketId = ticketIdElement ? ticketIdElement.innerText.trim() : null;
-
-                // Map for country codes
-                const countryMap = {
-                    "DE": "Germany",
-                    "FR": "France",
-                    "ES": "Spain",
-                    "IT": "Italy",
-                    // Weitere Länderkürzel und Namen hier hinzufügen...
-                };
-
-                if (nameMatches && addressMatches && cityMatches && postalCodeMatches && emailMatches && phoneMatches && countryMatches && ticketId) {
-                    const countryCode = countryMatches[1].trim();
-                    const countryName = countryMap[countryCode] || countryCode;  // Falls kein Match in der Map, zeige das Kürzel
-
+                if (chairModelMatches && sparePartMatches) {
                     return {
-                        vName: nameMatches[1],
-                        fName: nameMatches[2],
-                        address: addressMatches[1].trim() + " " + addressMatches[2].trim(),
-                        city: cityMatches[1].trim(),
-                        postalCode: postalCodeMatches[1].trim(),
-                        email: emailMatches[1].trim(),
-                        phone: phoneMatches[1].trim(),
-                        country: countryName,
-                        ticketID: ticketId + " z"
+                        chairModel: chairModelMatches[1].trim(),
+                        sparePart: sparePartMatches[1].trim(),
                     };
                 } else {
                     return null;
                 }
             },
+        }, (results) => {
+            if (results && results[0] && results[0].result) {
+                const data = results[0].result;
+                document.getElementById('chairModel').value = data.chairModel;
+                document.getElementById('sparePart').value = data.sparePart;
+                findMatchingSKU(data.chairModel, data.sparePart);
+            } else {
+                showAlert('Failed to extract data. Please check the format.', 'error');
+            }
+        });
+    });
+
+    // Event listener for the "Copy Name" button to extract user data
+    document.getElementById('copy-data').addEventListener('click', async () => {
+        let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+        chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: extractUserData,
         }, (results) => {
             if (results && results[0] && results[0].result) {
                 const data = results[0].result;
@@ -144,56 +185,23 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 isPartiallySuccessful = true;
             }
+
             const shippingMethod = document.getElementById('s_method_external_cheapest');
             if (shippingMethod) {
-                shippingMethod.click();
-    
-                // Manually trigger the 'change' event to ensure any event listeners are notified
+                shippingMethod.checked = true;
                 const event = new Event('change', { bubbles: true });
                 shippingMethod.dispatchEvent(event);
-    
                 showAlert('Data pasted successfully and shipping method selected!', 'success');
             } else {
-                console.log('Shipping method "s_method_external_cheapest" not found.');
                 showAlert('Data pasted, but shipping method not found.', 'error');
             }
-            // Wähle das entsprechende Land im Dropdown-Menü aus
-            selectCountryInDropdown(data.country);
 
             if (isPartiallySuccessful) {
                 showAlert('Paste partially successful', 'error');
-            } else {
-                showAlert('Data pasted successfully!', 'success');
             }
         } else {
             showAlert('No data to paste.', 'error');
         }
-    }
-
-    // Funktion, um das passende Land im Dropdown-Menü auszuwählen
-    function selectCountryInDropdown(countryName) {
-        const dropdown = document.getElementById('order-shipping_address_country_id');
-        
-        if (!dropdown) {
-            console.error('Dropdown not found!');
-            return;
-        }
-
-        // Überprüfen, ob der Ländernamen oder Kürzel übereinstimmt
-        for (let i = 0; i < dropdown.options.length; i++) {
-            let option = dropdown.options[i];
-            if (option.text.trim().toLowerCase() === countryName.trim().toLowerCase()) {
-                dropdown.selectedIndex = i;
-                console.log(`Selected country: ${option.text}`);
-                return;
-            } else if (option.value.trim().toLowerCase() === countryName.trim().toLowerCase()) {
-                dropdown.selectedIndex = i;
-                console.log(`Selected country by value: ${option.value}`);
-                return;
-            }
-        }
-
-        console.warn('Country not found in dropdown!');
     }
 
     // Event listener for the "Paste Data" button
@@ -207,10 +215,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data) {
                     chrome.scripting.executeScript({
                         target: { tabId: tabId },
-                        function: pasteDataInForm,
+                        func: pasteDataInForm,
                         args: [data]
                     });
-                    showAlert('Data successfully Pasted!', 'success');
                 } else {
                     showAlert('No data found in storage.', 'error');
                 }
@@ -228,15 +235,21 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data) {
                 if (disguisePhoneCheckbox && disguisePhoneCheckbox.checked) {
                     data.phone = "0123456789";  // Disguised phone number
+                    showAlert('Phone number disguised', 'success');
+                } else {
+                    showAlert('Phone number restored', 'success');
                 }
                 saveDataToStorage(data);
 
                 const telephoneField = document.getElementById('order-shipping_address_telephone');
                 if (telephoneField) {
                     telephoneField.value = data.phone;
+                } else {
+                    showAlert('Phone field not found.', 'error');
                 }
+            } else {
+                showAlert('No data found in storage.', 'error');
             }
         });
     });
-
 });
