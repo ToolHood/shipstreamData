@@ -244,11 +244,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const telephoneField = document.getElementById('order-shipping_address_telephone');
                 if (telephoneField) {
                     telephoneField.value = data.phone;
-                } else {
-                    showAlert('Phone field not found.', 'error');
                 }
-            } else {
-                showAlert('No data found in storage.', 'error');
             }
         });
     });
