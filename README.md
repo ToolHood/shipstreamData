@@ -19,6 +19,8 @@
 
 The **NobleChairs Tools** Chrome extension is a powerful utility designed for the employees of Caseking and the Pro Gamersware to streamline data entry. This tool allows for easy copying of customer data from platforms such as Zendesk and then pasting it into specific forms on Shipstream. Additionally, it includes the ability to disguise phone numbers when required.
 
+![](https://github.com/ToolHood/shipstreamData/blame/main/assets/final.mp4)
+
 ---
 
 ## Features
