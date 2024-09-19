@@ -1,7 +1,5 @@
 # NobleChairs Tool
 
-![](assets/final-Cover.jpg)
-
 ### A Chrome/Edge extension for efficiently copying and pasting user data into Shipstream, with added functionalities such as telephone number disguise.
 
 ## Table of Contents
