@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const shippingMethod = document.getElementById('s_method_external_cheapest');
             if (shippingMethod) {
-                shippingMethod.checked = true;
+                shippingMethod.click();
                 const event = new Event('change', { bubbles: true });
                 shippingMethod.dispatchEvent(event);
                 showAlert('Data pasted successfully and shipping method selected!', 'success');
