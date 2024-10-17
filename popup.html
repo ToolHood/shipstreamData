@@ -1,9 +1,19 @@
+<!--
+__  __           ______             _____________  __
+_ \/ /______________  /________________  ____/_  |/ /
+__  /_  __ \  ___/_  //_/  _ \_  ___/_  /_   __    / 
+_  / / /_/ / /__ _  ,<  /  __/  /   _  __/   _    |  
+/_/  \____/\___/ /_/|_| \___//_/    /_/      /_/|_|  
+© 2024 Christoph Thiel                                                   
+
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Caseking & NobleChairs Tool</title>
+  <title>Chair Spareparts</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     * {
@@ -14,14 +24,18 @@
     }
 
     body {
-      background-color: #005493; 
-      color: #f1f1f1; 
+      font-family: 'Roboto', sans-serif;
+      background-color: #1d1d1b;
+      color: #d0d0d0;
       padding: 20px;
-      width: 300px;
+      width: 200px;
+      margin: 0 auto;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     }
 
     h1 {
-      color: #f1f1f1; 
+      color: #e5b13a;
       font-size: 1.5rem;
       margin-bottom: 4px;
       text-align: center; 
@@ -35,8 +49,8 @@
     }
 
     .btn {
-      background-color: #f1c40f; 
-      color: #005493; 
+      background-color: #e5b13a; 
+      color: #1d1d1b; 
       border: none;
       padding: 10px 20px;
       font-size: 14px;
@@ -52,7 +66,7 @@
     }
 
     .btn:hover {
-      background-color: #e1b308; 
+      background-color: #e5b13a; 
     }
 
     /* Hide the input fields */
@@ -102,7 +116,7 @@
       position: relative;
       cursor: pointer;
       user-select: none;
-      background: #002D59;
+      background: #1d1d1b;
       transform: skew(-10deg);
       transition: all 0.2s ease;
     }
@@ -122,7 +136,7 @@
     .checkbox-wrapper-8 .tgl-skewed + .tgl-btn:before {
       content: attr(data-tg-off);
       left: 0;
-      background-color: #002D59;
+      background-color: #1d1d1b;
     }
 
     .checkbox-wrapper-8 .tgl-skewed + .tgl-btn:after {
@@ -132,7 +146,7 @@
     }
 
     .checkbox-wrapper-8 .tgl-skewed:checked + .tgl-btn {
-      background: #f1c40f;
+      background: #e5b13a;
     }
 
     .checkbox-wrapper-8 .tgl-skewed:checked + .tgl-btn:before {
