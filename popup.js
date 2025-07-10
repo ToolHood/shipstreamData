@@ -53,6 +53,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const postalCodeRegex = /Post code:\s*([^\n]+)/;
         const emailRegex = /Email:\s*([^\n]+)/;
         const phoneRegex = /Phone:\s*([^\n]+)/;
+        const batchRegex = /Batch:\s*([^\n]+)/;
+        const chairModelRegex = /Chair:\s*([^\n]+)/;
+        const countryRegex = /Country:\s*-?\s*([A-Z]{2})/;
 
         const nameMatches = bodyText.match(nameRegex);
         const addressMatches = bodyText.match(addressRegex);
@@ -60,11 +63,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         const postalCodeMatches = bodyText.match(postalCodeRegex);
         const emailMatches = bodyText.match(emailRegex);
         const phoneMatches = bodyText.match(phoneRegex);
+        const batchMatches = bodyText.match(batchRegex);
+        const chairModelMatches = bodyText.match(chairModelRegex);
+        const countryMatches = bodyText.match(countryRegex);
 
         const ticketIdElement = document.querySelector('[data-test-id="header-tab-subtitle"] span');
         const ticketId = ticketIdElement ? ticketIdElement.innerText.trim() : null;
 
         if (nameMatches && addressMatches && cityMatches && postalCodeMatches && emailMatches && phoneMatches && ticketId) {
+            // Process batch number - if empty or "nicht vorhanden", use "---"
+            let batchNumber = "---";
+            if (batchMatches && batchMatches[1].trim()) {
+                const batchValue = batchMatches[1].trim().toLowerCase();
+                if (batchValue !== "nicht vorhanden" && batchValue !== "") {
+                    batchNumber = batchMatches[1].trim();
+                }
+            }
+
+            // Process chair model - extract everything from "NBL-" onwards
+            let mainItemSku = "";
+            if (chairModelMatches && chairModelMatches[1].trim()) {
+                const chairModel = chairModelMatches[1].trim();
+                const nblIndex = chairModel.indexOf("NBL-");
+                if (nblIndex !== -1) {
+                    mainItemSku = chairModel.substring(nblIndex);
+                }
+            }
+
             return {
                 vName: nameMatches[1],
                 fName: nameMatches[2],
@@ -73,7 +98,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 postalCode: postalCodeMatches[1].trim(),
                 email: emailMatches[1].trim(),
                 phone: phoneMatches[1].trim(),
-                ticketID: ticketId + " z"
+                ticketID: ticketId + " z",
+                batchNumber: batchNumber,
+                mainItemSku: mainItemSku,
+                country: countryMatches ? countryMatches[1].trim() : ""
             };
         } else {
             return null;
@@ -182,6 +210,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (document.getElementById('order-comment')) {
                 document.getElementById('order-comment').value = data.ticketID;
+            } else {
+                isPartiallySuccessful = true;
+            }
+
+            if (document.getElementById('order_custom_field_batch_number')) {
+                document.getElementById('order_custom_field_batch_number').value = data.batchNumber;
+            } else {
+                isPartiallySuccessful = true;
+            }
+
+            if (document.getElementById('order_custom_field_main_item_sku')) {
+                document.getElementById('order_custom_field_main_item_sku').value = data.mainItemSku;
+            } else {
+                isPartiallySuccessful = true;
+            }
+
+            if (document.getElementById('order-shipping_address_country_id') && data.country) {
+                const countrySelect = document.getElementById('order-shipping_address_country_id');
+                countrySelect.value = data.country;
+                // Trigger change event to ensure any dependent fields are updated
+                const event = new Event('change', { bubbles: true });
+                countrySelect.dispatchEvent(event);
             } else {
                 isPartiallySuccessful = true;
             }
