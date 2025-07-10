@@ -25,21 +25,64 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // Function to clear spare parts display
+    function clearSparePartsDisplay() {
+        // Remove any existing spare part elements
+        const existingElements = document.querySelectorAll('.spare-part-item, .sku-item');
+        existingElements.forEach(element => element.remove());
+    }
+
+    // Function to display a spare part in the UI
+    function displaySparePart(sparePart, index) {
+        const sparePartDiv = document.createElement('div');
+        sparePartDiv.className = 'input-wrapper hidden-input spare-part-item';
+        sparePartDiv.innerHTML = `<input type="text" id="sparePart${index}" readonly placeholder="Spare Part ${index + 1}" value="${sparePart}">`;
+        
+        const skuDiv = document.createElement('div');
+        skuDiv.className = 'input-wrapper hidden-input sku-item';
+        skuDiv.innerHTML = `<input type="text" id="sku${index}" readonly placeholder="SKU ${index + 1}">`;
+        
+        // Insert after the chairModel input
+        const chairModelDiv = document.getElementById('chairModel').parentElement;
+        chairModelDiv.parentNode.insertBefore(sparePartDiv, chairModelDiv.nextSibling);
+        chairModelDiv.parentNode.insertBefore(skuDiv, sparePartDiv.nextSibling);
+    }
+
     // Function to find matching SKU based on chairModel and sparePart
-    async function findMatchingSKU(chairModel, sparePart) {
+    async function findMatchingSKU(chairModel, sparePart, index = 0) {
         const response = await fetch(chrome.runtime.getURL('data/spare_parts_sku.json'));
         const data = await response.json();
 
         // Search for the matching combination
         const combination = data.find(entry => entry.chairModel === chairModel && entry.sparePart === sparePart);
 
-        if (combination) {
-            document.getElementById('sku').value = combination.sku;
-            navigator.clipboard.writeText(combination.sku)  // Automatically copy SKU to clipboard
-                .then(() => showAlert(`Matching SKU copied to clipboard:\n ${combination.sku}`, 'success'))
-                .catch(() => showAlert('Failed to copy SKU to clipboard', 'error'));
-        } else {
-            showAlert('No matching SKU found', 'error');
+        const skuElement = index === 0 ? 
+            document.getElementById('sku') || document.getElementById('sku0') : 
+            document.getElementById(`sku${index}`);
+
+        if (combination && skuElement) {
+            skuElement.value = combination.sku;
+            
+            // Copy each found SKU to clipboard with delay for Win+V history
+            setTimeout(() => {
+                navigator.clipboard.writeText(combination.sku)
+                    .then(() => {
+                        console.log(`SKU ${index + 1} copied to clipboard: ${combination.sku}`);
+                        if (index === 0) {
+                            showAlert(`${combination.sku} copied to clipboard`, 'success');
+                        }
+                    })
+                    .catch(() => {
+                        if (index === 0) {
+                            showAlert('Failed to copy SKU to clipboard', 'error');
+                        }
+                    });
+            }, index * 500); // 500ms delay between each copy for clipboard history
+            
+            return combination.sku;
+        } else if (skuElement) {
+            skuElement.value = 'No match found';
+            return null;
         }
     }
 
@@ -108,7 +151,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Event listener for the "Copy Data" button to extract chair model and spare part
+    // Event listener for the "Copy Data" button to extract chair model and spare parts
     document.getElementById('copy-data').addEventListener('click', async () => {
         let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
@@ -118,15 +161,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const bodyText = document.body.innerText;
 
                 const chairModelRegex = /Chair:\s*([^\n]+)/;
-                const sparePartRegex = /Spare Parts Request\s*([^\n]+)/;
+                
+                // Extract multiple spare parts - everything after "Spare Parts Request" until "Files:" or end
+                const sparePartsSection = bodyText.match(/Spare Parts Request\s*([\s\S]*?)(?=Files:|$)/);
+                
+                let spareParts = [];
+                if (sparePartsSection && sparePartsSection[1]) {
+                    // Split by newlines and filter out empty lines
+                    const lines = sparePartsSection[1].split('\n')
+                        .map(line => line.trim())
+                        .filter(line => line && line !== '');
+                    
+                    spareParts = lines;
+                }
 
                 const chairModelMatches = bodyText.match(chairModelRegex);
-                const sparePartMatches = bodyText.match(sparePartRegex);
 
-                if (chairModelMatches && sparePartMatches) {
+                if (chairModelMatches && spareParts.length > 0) {
                     return {
                         chairModel: chairModelMatches[1].trim(),
-                        sparePart: sparePartMatches[1].trim(),
+                        spareParts: spareParts,
                     };
                 } else {
                     return null;
@@ -136,8 +190,34 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (results && results[0] && results[0].result) {
                 const data = results[0].result;
                 document.getElementById('chairModel').value = data.chairModel;
-                document.getElementById('sparePart').value = data.sparePart;
-                findMatchingSKU(data.chairModel, data.sparePart);
+                
+                // Clear previous spare parts display
+                clearSparePartsDisplay();
+                
+                // Process multiple spare parts and collect results
+                let foundSkus = [];
+                const promises = data.spareParts.map(async (sparePart, index) => {
+                    displaySparePart(sparePart, index);
+                    const sku = await findMatchingSKU(data.chairModel, sparePart, index);
+                    if (sku) {
+                        foundSkus.push(sku);
+                    }
+                    return sku;
+                });
+                
+                // Wait for all SKU searches to complete
+                Promise.all(promises).then((results) => {
+                    const successCount = results.filter(sku => sku !== null).length;
+                    setTimeout(() => {
+                        if (successCount > 1) {
+                            showAlert(`${successCount} SKUs copied to Win+V clipboard history`, 'success');
+                        } else if (successCount === 1) {
+                            showAlert(`1 SKU copied to clipboard`, 'success');
+                        } else {
+                            showAlert(`${data.spareParts.length} spare part(s) extracted, no SKUs found`, 'error');
+                        }
+                    }, (data.spareParts.length - 1) * 500 + 100); // Wait for all clipboard operations
+                });
             } else {
                 showAlert('Failed to extract data. Please check the format.', 'error');
             }
