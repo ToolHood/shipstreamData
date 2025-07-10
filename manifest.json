@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Noble Request Handler",
-  "version": "2.0",
-  "description": "2.0: User and SparePart Data Grabber\nhttps://github.com/ToolHood/shipstreamData/blob/main/README.md",
+  "name": "ChairFlow Pro",
+  "version": "3.0",
+  "description": "🚀 Professional NobleChairs workflow automation tool. Extracts customer data & multiple spare parts from tickets, finds matching SKUs, and auto-fills Shipstream orders. All SKUs copied to Win+V clipboard for instant access. Supports batch processing, country detection, and phone disguise features.",
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
